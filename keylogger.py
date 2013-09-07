@@ -65,8 +65,6 @@ class KeyLogger(object):
     def start_capture(self):
         """ Hook keyboard and pull key presses
 
-        keyboardhooking courtesy of
-        http://www.tinkernut.com/2013/07/17/how-to-make-a-simple-python-keylogger
         """
         hook = HookManager()
         hook.KeyDown = self.key_log
