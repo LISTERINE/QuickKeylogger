@@ -54,6 +54,7 @@ class KeyLogger(object):
             else:
                 final_key = key
         self.respond(final_key)
+        return True
 
     def respond(self, key):
         """ Override this function to change key response functionality.
